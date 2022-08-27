@@ -10,6 +10,7 @@
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "ItemTemplate.h"
+#include "EventEmitter.h"
 #include "QuestDef.h"
 #include "ItemTemplate.h"
 #include <unordered_map>
@@ -138,6 +139,8 @@ public:
     bool ResetRetroActiveAppearances;
 
     bool IsTransmogEnabled;
+
+    EventEmitter<void(Player*, uint32)> OnPlayerCollectsAppearance;
 
     bool IsAllowed(uint32 entry) const;
     bool IsNotAllowed(uint32 entry) const;
