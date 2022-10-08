@@ -316,12 +316,15 @@ public:
                         uint32 entry = sT->GetFakeEntry(newItem->GetGUID());
                         if (!entry)
                             continue;
-                        const ItemTemplate* temp = sObjectMgr->GetItemTemplate(entry);
-                        if (!temp)
-                            continue;
-                        if (!sT->SuitableForTransmogrification(player, temp))
-                            continue;
-                        cost += sT->GetSpecialPrice(temp);
+                        if (entry != HIDDEN_ITEM_ID)
+                        {
+                            const ItemTemplate* temp = sObjectMgr->GetItemTemplate(entry);
+                            if (!temp)
+                                continue;
+                            if (!sT->SuitableForTransmogrification(player, temp))
+                                continue;
+                            cost += sT->GetSpecialPrice(temp);
+                        }
                         items[slot] = entry;
                     }
                 }
@@ -423,6 +426,8 @@ public:
                         }
                     }
                     for (uint32 newItemEntryId : sT->collectionCache[accountId]) {
+                        if (!sObjectMgr->GetItemTemplate(newItemEntryId))
+                            continue;
                         Item* newItem = Item::CreateItem(newItemEntryId, 1, 0);
                         if (!newItem)
                             continue;
@@ -608,7 +613,7 @@ public:
 
     void OnPlayerCompleteQuest(Player* player, Quest const* quest) override
     {
-        if (!sT->GetUseCollectionSystem())
+        if (!sT->GetUseCollectionSystem() || !quest)
             return;
         for (uint8 i = 0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
         {
