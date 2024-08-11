@@ -21,6 +21,7 @@ Cant transmogrify rediculus items // Foereaper: would be fun to stab people with
 */
 #include <unordered_map>
 #include "Transmogrification.h"
+#include "Chat.h"
 #include "ScriptedCreature.h"
 #include "ItemTemplate.h"
 #include "DatabaseEnv.h"
@@ -442,7 +443,7 @@ public:
                     CharacterDatabase.CommitTransaction(trans);
                 }
                 else
-                    session->SendNotification(LANG_ERR_UNTRANSMOG_NO_TRANSMOGS);
+                    ChatHandler(session).SendNotification(LANG_ERR_UNTRANSMOG_NO_TRANSMOGS);
                 OnGossipHello(player, creature);
             } break;
             case EQUIPMENT_SLOT_END + 3: // Remove Transmogrification from single item
@@ -455,7 +456,7 @@ public:
                         session->SendAreaTriggerMessage("%s", GTS(LANG_ERR_UNTRANSMOG_OK));
                     }
                     else
-                        session->SendNotification(LANG_ERR_UNTRANSMOG_NO_TRANSMOGS);
+                        ChatHandler(session).SendNotification(LANG_ERR_UNTRANSMOG_NO_TRANSMOGS);
                 }
                 OnGossipSelect(player, creature, EQUIPMENT_SLOT_END, action);
             } break;
@@ -582,7 +583,7 @@ public:
                     if (res == LANG_ERR_TRANSMOG_OK)
                         session->SendAreaTriggerMessage("%s",GTS(LANG_ERR_TRANSMOG_OK));
                     else
-                        session->SendNotification(res);
+                        ChatHandler(session).SendNotification(res);
                 }
                 else
                 {
@@ -590,7 +591,7 @@ public:
                     if (res == LANG_ERR_TRANSMOG_OK)
                         session->SendAreaTriggerMessage("%s",GTS(LANG_ERR_TRANSMOG_OK));
                     else
-                        session->SendNotification(res);
+                        ChatHandler(session).SendNotification(res);
                 }
                 // OnGossipSelect(player, creature, EQUIPMENT_SLOT_END, sender);
                 // ShowTransmogItems(player, creature, sender);
@@ -624,7 +625,7 @@ public:
         }
         std::string name(code);
         if (name.find('"') != std::string::npos || name.find('\\') != std::string::npos)
-            player->GetSession()->SendNotification(LANG_PRESET_ERR_INVALID_NAME);
+            ChatHandler(player->GetSession()).SendNotification(LANG_PRESET_ERR_INVALID_NAME);
         else
         {
             for (uint8 presetID = 0; presetID < sT->GetMaxSets(); ++presetID) // should never reach over max
@@ -661,7 +662,7 @@ public:
                 cost += sT->GetSetCopperCost();
                 if (!player->HasEnoughMoney(cost))
                 {
-                    player->GetSession()->SendNotification(LANG_ERR_TRANSMOG_NOT_ENOUGH_MONEY);
+                    ChatHandler(player->GetSession()).SendNotification(LANG_ERR_TRANSMOG_NOT_ENOUGH_MONEY);
                     break;
                 }
 
@@ -891,7 +892,7 @@ private:
         if (sT->AddCollectedAppearance(accountId, itemId))
         {
             if (showChatMessage)
-                ChatHandler(player->GetSession()).PSendSysMessage( R"(|c%s|Hitem:%u:0:0:0:0:0:0:0:0|h[%s]|h|r %s)", itemQuality.c_str(), itemId, itemName.c_str(), GetLocaleText(locale, "added_appearance"));
+                ChatHandler(player->GetSession()).PSendSysMessage( R"(|c{}|Hitem:{}:0:0:0:0:0:0:0:0|h[{}]|h|r {})", itemQuality, itemId, itemName, GetLocaleText(locale, "added_appearance"));
 
             CharacterDatabase.Execute( "INSERT INTO custom_unlocked_appearances (account_id, item_template_id) VALUES ({}, {})", accountId, itemId);
             sTransmogrification->OnPlayerCollectsAppearance(player, itemId);
@@ -1119,21 +1120,24 @@ class unit_transmog_script : public UnitScript
 public:
     unit_transmog_script() : UnitScript("unit_transmog_script") { }
 
-    bool OnBuildValuesUpdate(Unit const* unit, uint8 /*updateType*/, ByteBuffer& fieldBuffer, Player* target, uint16 index) override
+    bool ShouldTrackValuesUpdatePosByIndex(Unit const* unit, uint8 /*updateType*/, uint16 index) override
     {
-        if (unit->IsPlayer() && index >= PLAYER_VISIBLE_ITEM_1_ENTRYID && index <= PLAYER_VISIBLE_ITEM_19_ENTRYID && (index & 1))
-        {
-            if (Item* item = unit->ToPlayer()->GetItemByPos(INVENTORY_SLOT_BAG_0, ((index - PLAYER_VISIBLE_ITEM_1_ENTRYID) / 2U)))
-            {
-                if (!sTransmogrification->IsEnabled() || target->GetPlayerSetting("mod-transmog", SETTING_HIDE_TRANSMOG).value)
-                {
-                    fieldBuffer << item->GetEntry();
-                    return true;
-                }
-            }
-        }
+        return unit->IsPlayer() && index >= PLAYER_VISIBLE_ITEM_1_ENTRYID && index <= PLAYER_VISIBLE_ITEM_19_ENTRYID && (index & 1);
+    }
 
-        return false;
+    void OnPatchValuesUpdate(Unit const* unit, ByteBuffer& valuesUpdateBuf, BuildValuesCachePosPointers& posPointers, Player* target) override
+    {
+        if (!unit->IsPlayer())
+            return;
+
+        for (auto it = posPointers.other.begin(); it != posPointers.other.end(); ++it)
+        {
+            uint16 index = it->first;
+            if (index >= PLAYER_VISIBLE_ITEM_1_ENTRYID && index <= PLAYER_VISIBLE_ITEM_19_ENTRYID && (index & 1))
+                if (Item* item = unit->ToPlayer()->GetItemByPos(INVENTORY_SLOT_BAG_0, ((index - PLAYER_VISIBLE_ITEM_1_ENTRYID) / 2U)))
+                    if (!sTransmogrification->IsEnabled() || target->GetPlayerSetting("mod-transmog", SETTING_HIDE_TRANSMOG).value)
+                        valuesUpdateBuf.put(it->second, item->GetEntry());
+        }
     }
 };
 

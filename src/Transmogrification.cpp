@@ -204,7 +204,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "Pieds" },
             { LOCALE_deDE, "Füße" },
             { LOCALE_zhCN, "脚" },
-            { LOCALE_zhTW, "เท้า" },
+            { LOCALE_zhTW, "腳" },
             { LOCALE_esES, "Pies" },
             { LOCALE_esMX, "Pies" },
             { LOCALE_ruRU, "Ступни" }
@@ -214,7 +214,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "Poignets" },
             { LOCALE_deDE, "Handgelenke" },
             { LOCALE_zhCN, "腕部" },
-            { LOCALE_zhTW, "ข้อมือ" },
+            { LOCALE_zhTW, "手腕" },
             { LOCALE_esES, "Muñecas" },
             { LOCALE_esMX, "Muñecas" },
             { LOCALE_ruRU, "Запястья" }
@@ -224,7 +224,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "Mains" },
             { LOCALE_deDE, "Hände" },
             { LOCALE_zhCN, "手" },
-            { LOCALE_zhTW, "มือ" },
+            { LOCALE_zhTW, "手" },
             { LOCALE_esES, "Manos" },
             { LOCALE_esMX, "Manos" },
             { LOCALE_ruRU, "Кисти рук" }
@@ -234,7 +234,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "Dos" },
             { LOCALE_deDE, "Rücken" },
             { LOCALE_zhCN, "背部" },
-            { LOCALE_zhTW, "หลัง" },
+            { LOCALE_zhTW, "背部" },
             { LOCALE_esES, "Espalda" },
             { LOCALE_esMX, "Espalda" },
             { LOCALE_ruRU, "Спина" }
@@ -244,7 +244,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "Main droite" },
             { LOCALE_deDE, "Haupthand" },
             { LOCALE_zhCN, "主手" },
-            { LOCALE_zhTW, "มือหนึ่ง" },
+            { LOCALE_zhTW, "主手" },
             { LOCALE_esES, "Mano derecha" },
             { LOCALE_esMX, "Mano derecha" },
             { LOCALE_ruRU, "Правая рука" }
@@ -254,7 +254,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "Main gauche" },
             { LOCALE_deDE, "Nebenhand" },
             { LOCALE_zhCN, "副手" },
-            { LOCALE_zhTW, "มือสอง" },
+            { LOCALE_zhTW, "副手" },
             { LOCALE_esES, "Mano izquierda" },
             { LOCALE_esMX, "Mano izquierda" },
             { LOCALE_ruRU, "Левая рука" }
@@ -264,7 +264,7 @@ const char* Transmogrification::GetSlotName(uint8 slot, WorldSession* session) c
             { LOCALE_frFR, "À distance" },
             { LOCALE_deDE, "Distanz" },
             { LOCALE_zhCN, "远程" },
-            { LOCALE_zhTW, "ระยะไกล" },
+            { LOCALE_zhTW, "遠程" },
             { LOCALE_esES, "A distancia" },
             { LOCALE_esMX, "A distancia" },
             { LOCALE_ruRU, "Дальний бой" }
@@ -389,7 +389,7 @@ std::string Transmogrification::GetItemLink(Item* item, WorldSession* session) c
         item->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3) << ":" <<
         item->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT) << ":" <<
         item->GetItemRandomPropertyId() << ":" << item->GetItemSuffixFactor() << ":" <<
-//        (uint32)item->GetOwner()->getLevel() << "|h[" << name << "]|h|r";
+//        (uint32)item->GetOwner()->GetLevel() << "|h[" << name << "]|h|r";
         (uint32)0 << "|h[" << name << "]|h|r";
 
     return oss.str();
@@ -760,7 +760,7 @@ bool Transmogrification::SuitableForTransmogrification(Player* player, ItemTempl
             return false;
     }
 
-    if (!IgnoreReqLevel && player->getLevel() < proto->RequiredLevel)
+    if (!IgnoreReqLevel && player->GetLevel() < proto->RequiredLevel)
         return false;
 
     if (!IgnoreReqSpell && proto->RequiredSpell != 0 && !player->HasSpell(proto->RequiredSpell))
@@ -1058,6 +1058,8 @@ void Transmogrification::LoadConfig(bool reload)
     for (auto& itr : Acore::Tokenize(stringMembershipIds, ',', false)) {
         MembershipIdsPet.push_back(Acore::StringTo<uint32>(itr).value());
     }
+
+    PetSpellId = sConfigMgr->GetOption<uint32>("Transmogrification.PetSpellId", 2000100);
 }
 
 void Transmogrification::DeleteFakeFromDB(ObjectGuid::LowType itemLowGuid, CharacterDatabaseTransaction* trans /*= nullptr*/)
